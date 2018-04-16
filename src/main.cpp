@@ -1,36 +1,72 @@
-/*
- * Copyright (c) <year> <author> (<email>)
- * Distributed under the MIT License.
- * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
- */
+#include <msgpack.hpp>
+#include <opendht.h>
+#include <opendht/rng.h>
+#include <opendht/infohash.h>
+#include <vector>
 
-#include <cstdlib>
-#include <iostream>
-#include <stdexcept>
+#include "rang.hpp"
+using namespace rang;
 
-#include "cppbase/factorial.hpp"
+static std::mt19937_64 rd {dht::crypto::random_device{}()};
+static std::uniform_int_distribution<dht::Value::Id> rand_id;
+static std::uniform_int_distribution<int> uni(1, 100);
 
-int main( const int numberOfInputs, const char* inputArguments[ ] )
+struct AgentInfo {
+    std::string agent_id;
+    std::string agent_pkey;
+    std::string host;
+    int port;
+
+    // implements msgpack-c serialization methods
+    MSGPACK_DEFINE(agent_id, agent_pkey, host, port);
+};
+
+int main()
 {
-	try
-	{
-		const int factorial = cppbase::computeFactorial( 10 );
-		std::cout << "10! = " << factorial << std::endl;
-	}
-	catch( std::exception& error )
-	{
-		std::cout << error.what( ) << std::endl;
-	}
+    dht::DhtRunner node;
 
-	try
-	{
-		const int factorial = cppbase::computeFactorial( -5 );
-		std::cout << "5! = " << factorial << std::endl;
-	}
-	catch( std::exception& error )
-	{
-		std::cout << error.what( ) << std::endl;
-	}
+    auto creds = dht::crypto::generateIdentity();
+    auto port = 10000 + uni(rd);
+    node.run(port, creds, true);
+    node.bootstrap("bootstrap.ring.cx", "4222");
 
-	return EXIT_SUCCESS;
+    const dht::InfoHash myid = node.getId();
+    const dht::InfoHash myNodeid = node.getNodeId();
+    std::cout << "My node port: " << fg::green << port << style::reset << std::endl;
+    std::cout << "My node id: " << fg::green << myNodeid << style::reset << std::endl;
+    std::cout << "My public key: " << fg::green << myid << style::reset << std::endl;
+
+    AgentInfo info {myNodeid.toString(), myid.toString(), "localhost", port};
+
+    auto channel = "markerlight-agents";
+    auto room = dht::InfoHash(channel);
+    if (not room) {
+        room = dht::InfoHash::get(channel);
+        std::cout << "Joining h(" << channel << ") = " << room << std::endl;
+    }
+
+    node.listen<AgentInfo>(room, [&](AgentInfo&& msg) {
+        if (msg.agent_pkey != myid.toString()) {
+            std::cout << msg.agent_pkey << " (" << msg.host << ":" << msg.port << ")" << std::endl;
+                // (msg.to == myid ? "ENCRYPTED ":"") << ": " << msg.id << " - " << msg.msg << std::endl;
+        }
+            // std::cout << msg.from.toString() << 
+                // (msg.to == myid ? "ENCRYPTED ":"") << ": " << msg.id << " - " << msg.msg << std::endl;
+        return true;
+    });
+    
+    // auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+    node.putSigned(room, info, [](bool ok) {
+        if (not ok)
+            std::cout << "Message publishing failed !" << std::endl;
+    });
+
+    std::cout << std::endl <<  "Serving..." << std::endl;
+    while(true) {}
+
+    // wait for dht threads to end
+    std::cout << std::endl <<  "Stopping node..." << std::endl;
+    node.join();
+    return 0;
 }

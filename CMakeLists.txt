@@ -2,7 +2,8 @@
 # Distributed under the MIT License.
 # See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.5)
+set(CMAKE_CXX_STANDARD 17)
 
 # Check if project name has been specified correctly.
 if((NOT PROJECT_NAME))
@@ -105,7 +106,7 @@ add_library(${LIB_NAME} ${SRC})
 if(BUILD_MAIN)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BIN_PATH})
   add_executable(${MAIN_NAME} ${MAIN_SRC})
-  target_link_libraries(${MAIN_NAME} ${LIB_NAME})
+  target_link_libraries(${MAIN_NAME} ${LIB_NAME} opendht)
 endif(BUILD_MAIN)
 
 if(BUILD_DOXYGEN_DOCS)
