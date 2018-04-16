@@ -5,6 +5,9 @@
 # Include script to build external libraries with CMake.
 include(ExternalProject)
 
+add_subdirectory(${INCLUDE_PATH}/cpr)
+include_directories(${CPR_INCLUDE_DIRS})
+
 # -------------------------------
 
 # Catch: https://github.com/philsquared/Catch

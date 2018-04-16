@@ -45,13 +45,13 @@ int main()
         std::cout << "Joining h(" << channel << ") = " << room << std::endl;
     }
 
-    node.listen<AgentInfo>(room, [&](AgentInfo&& msg) {
+    node.listen<AgentInfo>(room, [&](AgentInfo&& msg/*, bool expired*/) {
         if (msg.agent_pkey != myid.toString()) {
+            // if (expired) {
+            //     std::cout << "expired" << std::endl;
+            // }
             std::cout << msg.agent_pkey << " (" << msg.host << ":" << msg.port << ")" << std::endl;
-                // (msg.to == myid ? "ENCRYPTED ":"") << ": " << msg.id << " - " << msg.msg << std::endl;
         }
-            // std::cout << msg.from.toString() << 
-                // (msg.to == myid ? "ENCRYPTED ":"") << ": " << msg.id << " - " << msg.msg << std::endl;
         return true;
     });
     

@@ -106,7 +106,7 @@ add_library(${LIB_NAME} ${SRC})
 if(BUILD_MAIN)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BIN_PATH})
   add_executable(${MAIN_NAME} ${MAIN_SRC})
-  target_link_libraries(${MAIN_NAME} ${LIB_NAME} opendht)
+  target_link_libraries(${MAIN_NAME} ${LIB_NAME} opendht ${CPR_LIBRARIES})
 endif(BUILD_MAIN)
 
 if(BUILD_DOXYGEN_DOCS)

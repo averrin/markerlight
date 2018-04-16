@@ -4,6 +4,7 @@
 
 # Set project source files.
 set(SRC
+  "${SRC_PATH}/main.cpp"
 )
 
 # Set project main file.
